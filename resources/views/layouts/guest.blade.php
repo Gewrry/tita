@@ -30,7 +30,7 @@
                     </div>
                     <div class="text-center">
                         <h1 class="text-3xl font-black text-mint-950 tracking-tighter">TITA<span class="text-mint-500">.</span></h1>
-                        <p class="text-[10px] font-black text-beige-400 uppercase tracking-[0.3em] mt-1">Finance Operations</p>
+                        <p class="text-[9px] font-black text-beige-400 uppercase tracking-widest mt-1">Transaction, Inventory, Tracking & Analytics</p>
                     </div>
                 </a>
 
