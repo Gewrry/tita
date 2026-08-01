@@ -57,7 +57,16 @@
                         <span class="w-4 h-4 rounded-full shadow-sm" style="background-color: {{ $cat->color }}"></span>
                         <span class="font-bold text-mint-900 text-sm">{{ $cat->name }}</span>
                     </div>
-                    <form action="{{ route('categories.destroy', $cat) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this category? Products in this category will become uncategorized.')">
+                    <form action="{{ route('categories.destroy', $cat) }}" method="POST" x-ref="catDeleteForm_{{ $cat->id }}"
+                          @submit.prevent="
+                              $dispatch('confirm', {
+                                  title: 'Delete Category?',
+                                  message: 'Are you sure you want to delete this category? Products in this category will become uncategorized.',
+                                  confirmText: 'Yes, Delete',
+                                  confirmType: 'danger',
+                                  onConfirm: () => $refs['catDeleteForm_{{ $cat->id }}'].submit()
+                              })
+                          ">
                         @csrf @method('DELETE')
                         <button type="submit" class="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -97,6 +106,7 @@ function categoryModalHandler() {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify({
@@ -108,28 +118,32 @@ function categoryModalHandler() {
             .then(data => {
                 this.isSubmitting = false;
                 if (data.success) {
-                    // Find any element with id category_select (create or edit form)
-                    const select = document.getElementById('category_select');
+                    // Find any element with id category_id (create or edit form)
+                    const select = document.getElementById('category_id');
                     if (select) {
-                        const option = new Option(data.category.name, data.category.id, true, true);
-                        select.add(option);
-                    } else {
-                        // If we're on the index page filter, reload page to apply new category
-                        window.location.reload();
-                        return;
+                        if (select.tomselect) {
+                            select.tomselect.addOption({value: data.category.id, text: data.category.name});
+                            select.tomselect.addItem(data.category.id);
+                        } else {
+                            const option = new Option(data.category.name, data.category.id, true, true);
+                            select.add(option);
+                            // Trigger change event to notify Alpine of the change
+                            select.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
                     }
                     
                     this.showCategoryModal = false;
                     this.newCatName = '';
                     
-                    // Optional: show a small toast or visual feedback
+                    // Show toast notification
+                    window.dispatchEvent(new CustomEvent('notify', { detail: { msg: 'Category created successfully!', type: 'success' } }));
                 } else {
-                    alert('Validation error: Please check your input.');
+                    window.dispatchEvent(new CustomEvent('notify', { detail: { msg: 'Validation error: Please check your input.', type: 'error' } }));
                 }
             })
             .catch(err => {
                 this.isSubmitting = false;
-                alert('An error occurred. Please try again.');
+                window.dispatchEvent(new CustomEvent('notify', { detail: { msg: 'An error occurred. Please try again.', type: 'error' } }));
             });
         }
     }

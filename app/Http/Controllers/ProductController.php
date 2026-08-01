@@ -36,7 +36,18 @@ class ProductController extends Controller
             }
         }
 
-        $products = $query->latest()->paginate(20);
+        // Sorting
+        match ($request->sort) {
+            'name_asc'    => $query->orderBy('name', 'asc'),
+            'name_desc'   => $query->orderBy('name', 'desc'),
+            'price_asc'   => $query->orderBy('selling_price', 'asc'),
+            'price_desc'  => $query->orderBy('selling_price', 'desc'),
+            'stock_asc'   => $query->orderBy('stock_quantity', 'asc'),
+            'stock_desc'  => $query->orderBy('stock_quantity', 'desc'),
+            default       => $query->latest(),
+        };
+
+        $products = $query->paginate(20)->withQueryString();
         $categories = Category::orderBy('sort_order')->get();
 
         return view('products.index', compact('products', 'categories'));
@@ -91,6 +102,15 @@ class ProductController extends Controller
 
         AuditTrail::log('created', $product, null, $product->toArray());
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Product created successfully.',
+                'product' => $product,
+                'redirect' => route('products.index')
+            ], 201);
+        }
+
         return redirect()->route('products.index')
             ->with('success', 'Product created successfully.');
     }
@@ -132,6 +152,14 @@ class ProductController extends Controller
         $product->update($validated);
         AuditTrail::log('updated', $product, $oldValues, $product->fresh()->toArray());
 
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Product updated successfully.',
+                'product' => $product
+            ]);
+        }
+
         return redirect()->route('products.index')
             ->with('success', 'Product updated successfully.');
     }
@@ -160,7 +188,23 @@ class ProductController extends Controller
             ? -abs($validated['quantity']) 
             : $validated['quantity'];
 
-        $product->adjustStock($qty, $validated['type'], null, null, $validated['notes']);
+        $movement = $product->adjustStock($qty, $validated['type'], null, null, $validated['notes']);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Stock adjusted: {$validated['type']} {$validated['quantity']} units.",
+                'new_stock' => $product->fresh()->stock_quantity,
+                'movement' => [
+                    'type' => $movement->type,
+                    'quantity' => $movement->quantity,
+                    'stock_before' => $movement->stock_before,
+                    'stock_after' => $movement->stock_after,
+                    'notes' => $movement->notes,
+                    'date' => $movement->created_at->format('M d, Y H:i')
+                ]
+            ]);
+        }
 
         return redirect()->back()
             ->with('success', "Stock adjusted: {$validated['type']} {$validated['quantity']} units.");

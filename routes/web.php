@@ -59,22 +59,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
     Route::get('/pos/search', [PosController::class, 'searchProducts'])->name('pos.search');
 
-    // Customers
+    // Customers — analytics must be BEFORE the resource route to avoid {customer} binding conflict
+    Route::get('customers/analytics', [App\Http\Controllers\CustomerController::class, 'analytics'])->name('customers.analytics');
     Route::get('customers/{customer}/soa-pdf', [App\Http\Controllers\CustomerController::class, 'downloadSoaPdf'])->name('customers.soa-pdf');
     Route::resource('customers', App\Http\Controllers\CustomerController::class);
     Route::get('customers/{customer}/soa', [CustomerController::class, 'soa'])->name('customers.soa');
 
-    // Invoices
+    // Invoices — analytics must be registered BEFORE the resource to avoid {invoice} binding conflict
+    Route::get('invoices/analytics', [App\Http\Controllers\InvoiceController::class, 'analytics'])->name('invoices.analytics');
     Route::get('invoices/{invoice}/pdf', [App\Http\Controllers\InvoiceController::class, 'downloadPdf'])->name('invoices.pdf');
+    Route::post('invoices/{invoice}/mark-paid', [App\Http\Controllers\InvoiceController::class, 'markPaid'])->name('invoices.mark-paid');
     Route::resource('invoices', App\Http\Controllers\InvoiceController::class);
 
-    // Payments
+    // Payments — analytics must be BEFORE the resource to avoid {payment} binding conflict
+    Route::get('payments/analytics', [App\Http\Controllers\PaymentController::class, 'analytics'])->name('payments.analytics');
     Route::resource('payments', PaymentController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
 
     // Expenses
+    Route::get('expenses/analytics', [App\Http\Controllers\ExpenseController::class, 'analytics'])->name('expenses.analytics');
     Route::resource('expenses', ExpenseController::class)->except(['show']);
 
     // Savings
+    Route::get('savings/analytics', [App\Http\Controllers\SavingsController::class, 'analytics'])->name('savings.analytics');
     Route::resource('savings', SavingsController::class)->only(['index', 'store', 'destroy']);
     Route::resource('savings-goals', SavingsGoalController::class)->only(['store', 'update', 'destroy']);
     

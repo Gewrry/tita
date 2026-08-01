@@ -30,17 +30,42 @@ class DashboardController extends Controller
         $startOfMonth = $currentMonth->copy()->startOfMonth();
         $endOfMonth = $currentMonth->copy()->endOfMonth();
 
+        // Previous month for trend comparisons
+        $prevMonth = $currentMonth->copy()->subMonth();
+        $startOfPrevMonth = $prevMonth->copy()->startOfMonth();
+        $endOfPrevMonth = $prevMonth->copy()->endOfMonth();
+
         // Today's income (always current day)
         $todayIncome = Payment::whereDate('payment_date', $today)->sum('amount');
 
         // Month income
         $monthIncome = Payment::whereBetween('payment_date', [$startOfMonth, $endOfMonth])->sum('amount');
 
+        // Previous month income
+        $prevMonthIncome = Payment::whereBetween('payment_date', [$startOfPrevMonth, $endOfPrevMonth])->sum('amount');
+
         // Month expenses
         $monthExpenses = Expense::whereBetween('expense_date', [$startOfMonth, $endOfMonth])->sum('amount');
 
+        // Previous month expenses
+        $prevMonthExpenses = Expense::whereBetween('expense_date', [$startOfPrevMonth, $endOfPrevMonth])->sum('amount');
+
         // Profit
         $monthProfit = $monthIncome - $monthExpenses;
+        $prevMonthProfit = $prevMonthIncome - $prevMonthExpenses;
+
+        // Trend calculations (percentage change)
+        $incomeTrend = $prevMonthIncome > 0
+            ? round((($monthIncome - $prevMonthIncome) / $prevMonthIncome) * 100, 1)
+            : ($monthIncome > 0 ? 100 : 0);
+
+        $expensesTrend = $prevMonthExpenses > 0
+            ? round((($monthExpenses - $prevMonthExpenses) / $prevMonthExpenses) * 100, 1)
+            : ($monthExpenses > 0 ? 100 : 0);
+
+        $profitTrend = $prevMonthProfit != 0
+            ? round((($monthProfit - $prevMonthProfit) / abs($prevMonthProfit)) * 100, 1)
+            : ($monthProfit > 0 ? 100 : 0);
 
         // Pending payments (unpaid + partial invoices)
         $pendingPayments = Invoice::whereIn('status', ['unpaid', 'partial'])->sum('total_amount')
@@ -87,7 +112,7 @@ class DashboardController extends Controller
             ]);
         }
 
-        // === NEW: Business-mode-aware widgets ===
+        // === Business-mode-aware widgets ===
         $biz = business();
         
         // Low Stock Products
@@ -130,8 +155,14 @@ class DashboardController extends Controller
         return view('dashboard', compact(
             'todayIncome',
             'monthIncome',
+            'prevMonthIncome',
             'monthExpenses',
+            'prevMonthExpenses',
             'monthProfit',
+            'prevMonthProfit',
+            'incomeTrend',
+            'expensesTrend',
+            'profitTrend',
             'pendingPayments',
             'overdueCount',
             'overdueAmount',
