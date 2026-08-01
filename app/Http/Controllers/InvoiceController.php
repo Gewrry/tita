@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Customer;
+use App\Models\Product;
 use App\Models\AuditTrail;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -20,9 +21,10 @@ class InvoiceController extends Controller
         }
 
         $customers = Customer::orderBy('name')->get(['id', 'name', 'email', 'phone']);
+        $products  = Product::where('is_active', true)->orderBy('name')->get(['id', 'name', 'description', 'selling_price']);
         $invoiceNumber = Invoice::generateInvoiceNumber();
 
-        return view('invoices.index', compact('customers', 'invoiceNumber'));
+        return view('invoices.index', compact('customers', 'products', 'invoiceNumber'));
     }
 
     private function jsonIndex(Request $request)
@@ -118,6 +120,7 @@ class InvoiceController extends Controller
             'penalty_value'        => 'nullable|numeric|min:0',
             'notes'                => 'nullable|string',
             'items'                => 'required|array|min:1',
+            'items.*.product_id'   => 'nullable|exists:products,id',
             'items.*.description'  => 'required|string|max:255',
             'items.*.quantity'     => 'required|numeric|min:0.01',
             'items.*.price'        => 'required|numeric|min:0',
@@ -143,6 +146,7 @@ class InvoiceController extends Controller
 
         foreach ($validated['items'] as $item) {
             $invoice->items()->create([
+                'product_id'  => $item['product_id'] ?? null,
                 'description' => $item['description'],
                 'quantity'    => $item['quantity'],
                 'price'       => $item['price'],
@@ -205,6 +209,7 @@ class InvoiceController extends Controller
             'penalty_value'       => 'nullable|numeric|min:0',
             'notes'               => 'nullable|string',
             'items'               => 'required|array|min:1',
+            'items.*.product_id'  => 'nullable|exists:products,id',
             'items.*.description' => 'required|string|max:255',
             'items.*.quantity'    => 'required|numeric|min:0.01',
             'items.*.price'       => 'required|numeric|min:0',
@@ -225,6 +230,7 @@ class InvoiceController extends Controller
 
         foreach ($validated['items'] as $item) {
             $invoice->items()->create([
+                'product_id'  => $item['product_id'] ?? null,
                 'description' => $item['description'],
                 'quantity'    => $item['quantity'],
                 'price'       => $item['price'],

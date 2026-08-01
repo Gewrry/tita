@@ -13,12 +13,18 @@ class Expense extends Model
 
     protected $fillable = [
         'user_id',
+        'product_id',
         'description',
         'amount',
         'category',
         'expense_date',
         'notes',
     ];
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
 
     protected $casts = [
         'amount' => 'decimal:2',

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Expense;
+use App\Models\Product;
 use App\Models\AuditTrail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -94,7 +95,9 @@ class ExpenseController extends Controller
             ->whereYear('expense_date', now()->year)
             ->sum('amount');
 
-        return view('expenses.index', compact('expenses', 'categories', 'totalThisMonth'));
+        $products = Product::where('is_active', true)->orderBy('name')->get(['id', 'name', 'cost_price']);
+
+        return view('expenses.index', compact('expenses', 'categories', 'totalThisMonth', 'products'));
     }
 
     public function create()
@@ -106,6 +109,7 @@ class ExpenseController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'product_id'   => 'nullable|exists:products,id',
             'description'  => 'required|string|max:255',
             'amount'       => 'required|numeric|min:0.01',
             'category'     => 'required|in:' . implode(',', array_keys(Expense::$categories)),
@@ -136,6 +140,7 @@ class ExpenseController extends Controller
     public function update(Request $request, Expense $expense)
     {
         $validated = $request->validate([
+            'product_id'   => 'nullable|exists:products,id',
             'description'  => 'required|string|max:255',
             'amount'       => 'required|numeric|min:0.01',
             'category'     => 'required|in:' . implode(',', array_keys(Expense::$categories)),
@@ -178,6 +183,7 @@ class ExpenseController extends Controller
     {
         return [
             'id'           => $e->id,
+            'product_id'   => $e->product_id,
             'description'  => $e->description,
             'amount'       => (float) $e->amount,
             'category'     => $e->category,

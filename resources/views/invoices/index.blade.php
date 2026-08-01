@@ -225,8 +225,8 @@
 }
 
 /* Line items */
-.line-item-row { display: grid; grid-template-columns: 1fr 80px 110px 100px 36px; gap: 8px; align-items: center; }
-.line-item-row.header { grid-template-columns: 1fr 80px 110px 100px 36px; }
+.line-item-row { display: grid; grid-template-columns: 160px 1fr 80px 110px 100px 36px; gap: 8px; align-items: center; }
+.line-item-row.header { grid-template-columns: 160px 1fr 80px 110px 100px 36px; }
 
 /* Submit button */
 .submit-btn { transition: all .2s; position: relative; overflow: hidden; }
@@ -281,10 +281,11 @@
         padding: 12px !important;
         position: relative;
     }
-    .line-item-row > input:nth-child(1) { flex: 0 0 100%; padding-right: 40px; } /* Description */
-    .line-item-row > input:nth-child(2) { flex: 0 0 calc(50% - 5px); } /* Qty */
-    .line-item-row > input:nth-child(3) { flex: 0 0 calc(50% - 5px); } /* Price */
-    .line-item-row > div:nth-child(4) { 
+    .line-item-row > select:nth-child(1) { flex: 0 0 100%; padding-right: 40px; } /* Product */
+    .line-item-row > input:nth-child(2) { flex: 0 0 100%; } /* Description */
+    .line-item-row > input:nth-child(3) { flex: 0 0 calc(50% - 5px); } /* Qty */
+    .line-item-row > input:nth-child(4) { flex: 0 0 calc(50% - 5px); } /* Price */
+    .line-item-row > div:nth-child(5) { 
         flex: 0 0 100%; 
         text-align: right !important; 
         font-size: 15px !important; 
@@ -837,6 +838,7 @@
 
                     {{-- Item header --}}
                     <div class="line-item-row header mb-2 px-1">
+                        <span class="text-[10px] font-800 text-beige-400 uppercase tracking-wider">Product (Opt)</span>
                         <span class="text-[10px] font-800 text-beige-400 uppercase tracking-wider">Description</span>
                         <span class="text-[10px] font-800 text-beige-400 uppercase tracking-wider text-center">Qty</span>
                         <span class="text-[10px] font-800 text-beige-400 uppercase tracking-wider text-right">Unit Price</span>
@@ -846,7 +848,14 @@
 
                     <div class="space-y-2">
                         <template x-for="(item, idx) in form.items" :key="idx">
-                            <div class="line-item-row p-2 bg-beige-50 rounded-xl">
+                            <div class="line-item-row p-2 bg-beige-50 rounded-xl relative">
+                                <select x-model="item.product_id" @change="onProductSelect(item)"
+                                        class="form-input text-sm" style="min-height:36px; padding:7px 10px;">
+                                    <option value="">Manual Entry…</option>
+                                    <template x-for="p in products" :key="p.id">
+                                        <option :value="p.id" x-text="p.name"></option>
+                                    </template>
+                                </select>
                                 <input type="text" x-model="item.description"
                                        class="form-input text-sm" style="min-height:36px; padding:7px 10px;"
                                        placeholder="Description…">
@@ -1057,6 +1066,7 @@ function invoiceApp() {
     return {
         // State
         invoices:    [],
+        products:    @json($products),
         analytics:   {},
         loading:     true,
         selectedIds: [],
@@ -1082,7 +1092,7 @@ function invoiceApp() {
         form: {
             customer_id: '', invoice_number: '', issue_date: '', due_date: '',
             penalty_type: 'none', penalty_value: '', notes: '',
-            items: [{ description: '', quantity: 1, price: 0 }],
+            items: [{ product_id: '', description: '', quantity: 1, price: 0 }],
         },
         formErrors: {},
         grandTotal: 0,
@@ -1190,7 +1200,7 @@ function invoiceApp() {
                 issue_date: new Date().toISOString().split('T')[0],
                 due_date: new Date(Date.now() + 30*86400000).toISOString().split('T')[0],
                 penalty_type: 'none', penalty_value: '', notes: '',
-                items: [{ description: '', quantity: 1, price: 0 }],
+                items: [{ product_id: '', description: '', quantity: 1, price: 0 }],
             };
             this.calcTotal();
             this.modal.open = true;
@@ -1217,12 +1227,13 @@ function invoiceApp() {
                     penalty_value: i.penalty_value ?? '',
                     notes:         i.notes         ?? '',
                     items: (i.items ?? []).map(it => ({
+                        product_id:  it.product_id || '',
                         description: it.description,
                         quantity:    parseFloat(it.quantity),
                         price:       parseFloat(it.price),
                     })),
                 };
-                if (!this.form.items.length) this.form.items = [{ description: '', quantity: 1, price: 0 }];
+                if (!this.form.items.length) this.form.items = [{ product_id: '', description: '', quantity: 1, price: 0 }];
                 this.calcTotal();
                 this.modal.open = true;
             })
@@ -1231,7 +1242,17 @@ function invoiceApp() {
 
         // ──────────────── FORM ITEMS ────────────────
         addItem() {
-            this.form.items.push({ description: '', quantity: 1, price: 0 });
+            this.form.items.push({ product_id: '', description: '', quantity: 1, price: 0 });
+        },
+
+        onProductSelect(item) {
+            if (!item.product_id) return;
+            const p = this.products.find(x => String(x.id) === String(item.product_id));
+            if (p) {
+                item.description = p.name;
+                item.price = p.selling_price;
+                this.calcTotal();
+            }
         },
 
         removeItem(idx) {
@@ -1255,6 +1276,7 @@ function invoiceApp() {
             const payload = {
                 ...this.form,
                 items: this.form.items.map(it => ({
+                    product_id:  it.product_id || null,
                     description: it.description,
                     quantity:    parseFloat(it.quantity) || 0,
                     price:       parseFloat(it.price)    || 0,

@@ -389,6 +389,22 @@
                 <div class="overflow-y-auto flex-1 p-7">
                     <div class="space-y-5">
                         
+                        {{-- Product (Optional) --}}
+                        <div>
+                            <label class="block text-[11px] font-black text-mint-600 uppercase tracking-widest mb-1.5">
+                                Product (Optional)
+                            </label>
+                            <select x-model="form.product_id" @change="onProductSelect()"
+                                    :class="formErrors.product_id ? 'border-red-400' : 'border-beige-200 focus:border-mint-500'"
+                                    class="w-full px-4 py-3 bg-white border rounded-2xl text-sm font-semibold text-mint-900 focus:ring-4 focus:ring-mint-500/10 transition-all shadow-sm outline-none">
+                                <option value="">— Generic Expense (Manual Description) —</option>
+                                <template x-for="p in products" :key="p.id">
+                                    <option :value="p.id" x-text="p.name"></option>
+                                </template>
+                            </select>
+                            <p x-show="formErrors.product_id" x-text="formErrors.product_id?.[0]" class="text-xs text-red-500 mt-1.5 font-semibold"></p>
+                        </div>
+
                         {{-- Description & Amount --}}
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div class="sm:col-span-2">
@@ -519,6 +535,7 @@ function expenseDashboard() {
     return {
         // ── State ──────────────────────────────────────────────────────
         expenses:    [],
+        products:    @json($products ?? []),
         categories:  @json(collect($categories)->map(fn($l,$v)=>['value'=>$v,'label'=>$l])->values()),
         analytics:   {},
         loading:     true,
@@ -532,7 +549,7 @@ function expenseDashboard() {
 
         modal: { open: false, isEdit: false, submitting: false, id: null },
         form: {
-            description: '', amount: '', category: '',
+            product_id: '', description: '', amount: '', category: '',
             expense_date: new Date().toISOString().split('T')[0], notes: '',
         },
         formErrors: {},
@@ -630,6 +647,7 @@ function expenseDashboard() {
             if (expense) {
                 this.modal.id = expense.id;
                 this.form = {
+                    product_id:   expense.product_id || '',
                     description:  expense.description,
                     amount:       expense.amount,
                     category:     expense.category,
@@ -639,11 +657,20 @@ function expenseDashboard() {
             } else {
                 this.modal.id = null;
                 this.form = {
-                    description: '', amount: '', category: '',
+                    product_id: '', description: '', amount: '', category: '',
                     expense_date: new Date().toISOString().split('T')[0], notes: '',
                 };
             }
             this.modal.open = true;
+        },
+
+        onProductSelect() {
+            if (!this.form.product_id) return;
+            const p = this.products.find(x => String(x.id) === String(this.form.product_id));
+            if (p) {
+                this.form.description = p.name;
+                // Optional: this.form.amount = p.cost_price;
+            }
         },
 
         async submitForm() {
