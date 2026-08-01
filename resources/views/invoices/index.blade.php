@@ -261,12 +261,42 @@
     box-shadow: 0 32px 80px rgba(0,0,0,.2);
 }
 
-/* Responsive card layout */
+/* Responsive card layout & Modal */
 @media (max-width: 768px) {
     .desktop-table { display: none; }
     .mobile-cards  { display: block; }
-    .inv-modal-body { padding: 20px; }
-    .line-item-row { grid-template-columns: 1fr 60px 80px 80px 36px; gap: 6px; }
+    
+    .inv-modal-overlay { padding: 10px; }
+    .inv-modal { border-radius: 20px; margin: 0; }
+    .inv-modal-header { padding: 16px 20px; border-radius: 20px 20px 0 0; }
+    .inv-modal-body { padding: 16px 20px; }
+    .inv-modal-footer { padding: 16px 20px; border-radius: 0 0 20px 20px; flex-direction: column; gap: 8px; }
+    .inv-modal-footer button { width: 100%; }
+
+    .line-item-row.header { display: none; }
+    .line-item-row {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 12px !important;
+        position: relative;
+    }
+    .line-item-row > input:nth-child(1) { flex: 0 0 100%; padding-right: 40px; } /* Description */
+    .line-item-row > input:nth-child(2) { flex: 0 0 calc(50% - 5px); } /* Qty */
+    .line-item-row > input:nth-child(3) { flex: 0 0 calc(50% - 5px); } /* Price */
+    .line-item-row > div:nth-child(4) { 
+        flex: 0 0 100%; 
+        text-align: right !important; 
+        font-size: 15px !important; 
+        padding-top: 8px;
+        margin-top: 4px;
+        border-top: 1px dashed rgba(210,194,168,.4);
+    } /* Total */
+    .line-item-row > button { 
+        position: absolute; 
+        top: 12px; 
+        right: 12px; 
+    } /* Delete btn */
 }
 @media (min-width: 769px) {
     .desktop-table { display: block; }
