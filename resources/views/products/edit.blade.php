@@ -157,7 +157,9 @@
                             <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
                             <input type="text" id="name" name="name"
                                    value="{{ old('name', $product->name) }}"
-                                   @input="markDirty(); delete errors.name" required
+                                   @input="productName = $event.target.value; markDirty(); delete errors.name"
+                                   x-model="productName"
+                                   required
                                    placeholder="Product name"
                                    :class="errors.name ? 'error' : ''"
                                    class="form-input input-with-icon">
@@ -441,7 +443,7 @@
                                 <div class="flex flex-col items-center gap-2">
                                     <svg class="w-8 h-8 text-beige-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                     <p class="text-xs font-bold text-beige-500">Drop or <span class="text-mint-500">browse</span></p>
-                                    <p class="text-[10px] text-beige-400">JPG, PNG, WebP · Max 2MB</p>
+                                    <p class="text-[10px] text-beige-400">JPG, PNG, WebP · Max 5MB</p>
                                 </div>
                             </template>
                             <input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif"
@@ -474,8 +476,10 @@
                     </button>
                 </div>
                 <button type="submit"
-                        :disabled="submitting"
-                        class="submit-btn w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-mint-500 text-white font-extrabold text-sm shadow-lg shadow-mint-500/30">
+                        :disabled="submitting || !canSubmit"
+                        :title="!canSubmit ? 'Please fill in all required fields first' : ''"
+                        :class="!canSubmit ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-0.5'"
+                        class="submit-btn w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-mint-500 text-white font-extrabold text-sm shadow-lg shadow-mint-500/30 transition-all">
                     <template x-if="!submitting">
                         <span class="flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -650,6 +654,7 @@
 <script>
 function editProductForm() {
     return {
+        productName:    '{{ old('name', addslashes($product->name)) }}',
         costPrice:      {{ old('cost_price', (float)$product->cost_price) }},
         sellingPrice:   {{ old('selling_price', (float)$product->selling_price) }},
         submitting:     false,
@@ -660,6 +665,12 @@ function editProductForm() {
         imagePreview:   null,
         imageError:     '',
         adjustType:     'stock_in',
+
+        get canSubmit() {
+            return this.productName.trim() !== '' &&
+                   parseFloat(this.costPrice) > 0 &&
+                   parseFloat(this.sellingPrice) > 0;
+        },
 
         get profit()  { return parseFloat(this.sellingPrice||0) - parseFloat(this.costPrice||0); },
         get margin()  {
@@ -704,7 +715,7 @@ function editProductForm() {
             this.imageError = '';
             if (!file) return;
             if (!file.type.startsWith('image/')) { this.imageError = 'Please select a valid image file.'; return; }
-            if (file.size > 2*1024*1024)         { this.imageError = 'Image must be smaller than 2MB.'; return; }
+            if (file.size > 5*1024*1024)         { this.imageError = 'Image must be smaller than 5MB.'; return; }
             const reader = new FileReader();
             reader.onload = (e) => { this.imagePreview = e.target.result; };
             reader.readAsDataURL(file);
@@ -721,6 +732,20 @@ function editProductForm() {
         async handleSubmit(e) {
             if (this.submitting) { e.preventDefault(); return; }
             e.preventDefault();
+
+            // Client-side required field check
+            this.errors = {};
+            const name = document.getElementById('name').value.trim();
+            const costPrice = document.getElementById('cost_price').value.trim();
+            const sellingPrice = document.getElementById('selling_price').value.trim();
+            if (!name)         this.errors.name          = ['Product name is required.'];
+            if (!costPrice)    this.errors.cost_price    = ['Cost price is required.'];
+            if (!sellingPrice) this.errors.selling_price = ['Selling price is required.'];
+            if (Object.keys(this.errors).length > 0) {
+                window.dispatchEvent(new CustomEvent('notify', { detail: { msg: 'Please fill in all required fields.', type: 'error' } }));
+                return;
+            }
+
             this.submitting = true;
             this.errors = {};
 

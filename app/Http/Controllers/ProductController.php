@@ -68,14 +68,14 @@ class ProductController extends Controller
             'sku' => 'nullable|string|max:100',
             'barcode' => 'nullable|string|max:100',
             'description' => 'nullable|string',
-            'cost_price' => 'required|numeric|min:0',
-            'selling_price' => 'required|numeric|min:0',
+            'cost_price' => 'required|numeric|min:0.01',
+            'selling_price' => 'required|numeric|min:0.01',
             'stock_quantity' => 'required|integer|min:0',
             'reorder_level' => 'nullable|integer|min:0',
             'unit' => 'required|in:' . implode(',', array_keys(Product::$units)),
             'is_active' => 'nullable|boolean',
             'track_stock' => 'nullable|boolean',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:5120',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -131,13 +131,13 @@ class ProductController extends Controller
             'sku' => 'nullable|string|max:100',
             'barcode' => 'nullable|string|max:100',
             'description' => 'nullable|string',
-            'cost_price' => 'required|numeric|min:0',
-            'selling_price' => 'required|numeric|min:0',
+            'cost_price' => 'required|numeric|min:0.01',
+            'selling_price' => 'required|numeric|min:0.01',
             'reorder_level' => 'nullable|integer|min:0',
             'unit' => 'required|in:' . implode(',', array_keys(Product::$units)),
             'is_active' => 'nullable|boolean',
             'track_stock' => 'nullable|boolean',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image|max:5120',
         ]);
 
         $oldValues = $product->toArray();

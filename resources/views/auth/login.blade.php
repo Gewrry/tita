@@ -8,7 +8,7 @@
         <!-- Email Address -->
         <div>
             <x-input-label for="email" :value="__('Access Identifier')" />
-            <x-text-input id="email" class="block mt-2 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" placeholder="name@tita.finance" />
+            <x-text-input id="email" class="block mt-2 w-full transition-colors" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" placeholder="name@tita.finance" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
@@ -16,7 +16,7 @@
         <div class="mt-6">
             <x-input-label for="password" :value="__('Security Key')" />
 
-            <x-text-input id="password" class="block mt-2 w-full"
+            <x-text-input id="password" class="block mt-2 w-full transition-colors"
                             type="password"
                             name="password"
                             required autocomplete="current-password"

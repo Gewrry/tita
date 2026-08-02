@@ -247,7 +247,8 @@
                             <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
                             <input type="text" id="name" name="name"
                                    value="{{ old('name') }}"
-                                   @input="markDirty(); delete errors.name"
+                                   @input="productName = $event.target.value; markDirty(); delete errors.name"
+                                   x-model="productName"
                                    required
                                    placeholder="e.g. Coca-Cola 1.5L"
                                    :class="errors.name ? 'error' : ''"
@@ -450,6 +451,7 @@
                             <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                             <input type="number" id="stock_quantity" name="stock_quantity"
                                    value="{{ old('stock_quantity', 0) }}"
+                                   x-model="stockQty"
                                    @input="markDirty(); delete errors.stock_quantity" min="0" required
                                    placeholder="0"
                                    :class="errors.stock_quantity ? 'error' : ''"
@@ -517,7 +519,7 @@
                         </div>
                         <div>
                             <h2 class="text-sm font-extrabold text-mint-900">Product Image</h2>
-                            <p class="text-[11px] text-beige-400 font-medium">Optional. JPG, PNG, WebP up to 2MB</p>
+                            <p class="text-[11px] text-beige-400 font-medium">Optional. JPG, PNG, WebP up to 5MB</p>
                         </div>
                     </div>
                 </div>
@@ -547,7 +549,7 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-bold text-mint-900">Drop image here or <span class="text-mint-500 underline">browse</span></p>
-                                    <p class="text-xs text-beige-400 font-medium mt-1">JPG, PNG, WebP · Max 2MB · Min 200×200px</p>
+                                    <p class="text-xs text-beige-400 font-medium mt-1">JPG, PNG, WebP · Max 5MB · Min 200×200px</p>
                                 </div>
                             </div>
                         </template>
@@ -568,8 +570,10 @@
                 </a>
 
                 <button type="submit"
-                        :disabled="submitting"
-                        class="submit-btn w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-mint-500 text-white font-extrabold text-sm shadow-lg shadow-mint-500/30">
+                        :disabled="submitting || !canSubmit"
+                        :title="!canSubmit ? 'Please fill in all required fields first' : ''"
+                        :class="!canSubmit ? 'opacity-50 cursor-not-allowed' : 'hover:-translate-y-0.5'"
+                        class="submit-btn w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-mint-500 text-white font-extrabold text-sm shadow-lg shadow-mint-500/30 transition-all">
                     <template x-if="!submitting">
                         <span class="flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -597,8 +601,10 @@
 <script>
 function productForm() {
     return {
+        productName:  '{{ old('name', '') }}',
         costPrice:    {{ old('cost_price', 0) }},
         sellingPrice: {{ old('selling_price', 0) }},
+        stockQty:     '{{ old('stock_quantity', '') }}',
         submitting:   false,
         errors:       {},
         isDirty:      false,
@@ -606,6 +612,12 @@ function productForm() {
         imagePreview: null,
         imageError:   '',
 
+        get canSubmit() {
+            return this.productName.trim() !== '' &&
+                   parseFloat(this.costPrice) > 0 &&
+                   parseFloat(this.sellingPrice) > 0 &&
+                   String(this.stockQty).trim() !== '';
+        },
         get profit()  { return parseFloat(this.sellingPrice || 0) - parseFloat(this.costPrice || 0); },
         get margin()  {
             const sell = parseFloat(this.sellingPrice || 0);
@@ -660,8 +672,8 @@ function productForm() {
                 this.imageError = 'Please select a valid image file (JPG, PNG, WebP).';
                 return;
             }
-            if (file.size > 2 * 1024 * 1024) {
-                this.imageError = 'Image must be smaller than 2MB.';
+            if (file.size > 5 * 1024 * 1024) {
+                this.imageError = 'Image must be smaller than 5MB.';
                 return;
             }
             const reader = new FileReader();
@@ -683,6 +695,22 @@ function productForm() {
                 return;
             }
             event.preventDefault(); // Intercept normal submission
+
+            // Client-side required field check
+            this.errors = {};
+            const name = document.getElementById('name').value.trim();
+            const costPrice = document.getElementById('cost_price').value.trim();
+            const sellingPrice = document.getElementById('selling_price').value.trim();
+            const stockQty = document.getElementById('stock_quantity').value.trim();
+            if (!name)        this.errors.name           = ['Product name is required.'];
+            if (!costPrice)   this.errors.cost_price     = ['Cost price is required.'];
+            if (!sellingPrice) this.errors.selling_price = ['Selling price is required.'];
+            if (!stockQty)    this.errors.stock_quantity = ['Initial stock is required.'];
+            if (Object.keys(this.errors).length > 0) {
+                window.dispatchEvent(new CustomEvent('notify', { detail: { msg: 'Please fill in all required fields.', type: 'error' } }));
+                return;
+            }
+
             this.submitting = true;
             this.errors = {};
 
