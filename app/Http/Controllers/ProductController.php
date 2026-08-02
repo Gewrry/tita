@@ -84,10 +84,10 @@ class ProductController extends Controller
 
         if ($request->hasFile('image')) {
             try {
-                $uploadedFileUrl = cloudinary()->upload($request->file('image')->getRealPath(), [
+                $response = cloudinary()->uploadApi()->upload($request->file('image')->getRealPath(), [
                     'folder' => 'tita_products'
-                ])->getSecurePath();
-                $validated['image_path'] = $uploadedFileUrl;
+                ]);
+                $validated['image_path'] = $response['secure_url'];
             } catch (\Throwable $e) {
                 if ($request->wantsJson()) {
                     return response()->json([
@@ -159,10 +159,10 @@ class ProductController extends Controller
 
         if ($request->hasFile('image')) {
             try {
-                $uploadedFileUrl = cloudinary()->upload($request->file('image')->getRealPath(), [
+                $response = cloudinary()->uploadApi()->upload($request->file('image')->getRealPath(), [
                     'folder' => 'tita_products'
-                ])->getSecurePath();
-                $validated['image_path'] = $uploadedFileUrl;
+                ]);
+                $validated['image_path'] = $response['secure_url'];
             } catch (\Throwable $e) {
                 if ($request->wantsJson()) {
                     return response()->json([
