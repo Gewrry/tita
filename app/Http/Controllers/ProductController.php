@@ -83,10 +83,20 @@ class ProductController extends Controller
         $validated['reorder_level'] = $validated['reorder_level'] ?? 5;
 
         if ($request->hasFile('image')) {
-            $uploadedFileUrl = cloudinary()->upload($request->file('image')->getRealPath(), [
-                'folder' => 'tita_products'
-            ])->getSecurePath();
-            $validated['image_path'] = $uploadedFileUrl;
+            try {
+                $uploadedFileUrl = cloudinary()->upload($request->file('image')->getRealPath(), [
+                    'folder' => 'tita_products'
+                ])->getSecurePath();
+                $validated['image_path'] = $uploadedFileUrl;
+            } catch (\Exception $e) {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'message' => 'Image upload failed: ' . $e->getMessage(),
+                        'errors' => ['image' => ['Image upload failed: ' . $e->getMessage()]]
+                    ], 422);
+                }
+                return back()->withErrors(['image' => 'Image upload failed: ' . $e->getMessage()])->withInput();
+            }
         }
         unset($validated['image']);
 
@@ -148,10 +158,20 @@ class ProductController extends Controller
         $validated['track_stock'] = $request->boolean('track_stock', true);
 
         if ($request->hasFile('image')) {
-            $uploadedFileUrl = cloudinary()->upload($request->file('image')->getRealPath(), [
-                'folder' => 'tita_products'
-            ])->getSecurePath();
-            $validated['image_path'] = $uploadedFileUrl;
+            try {
+                $uploadedFileUrl = cloudinary()->upload($request->file('image')->getRealPath(), [
+                    'folder' => 'tita_products'
+                ])->getSecurePath();
+                $validated['image_path'] = $uploadedFileUrl;
+            } catch (\Exception $e) {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'message' => 'Image upload failed: ' . $e->getMessage(),
+                        'errors' => ['image' => ['Image upload failed: ' . $e->getMessage()]]
+                    ], 422);
+                }
+                return back()->withErrors(['image' => 'Image upload failed: ' . $e->getMessage()])->withInput();
+            }
         }
         unset($validated['image']);
 
