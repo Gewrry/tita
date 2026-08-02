@@ -125,4 +125,15 @@ class Product extends Model
         if ((float) $this->selling_price === 0.0) return 0;
         return ($this->getProfit() / (float) $this->selling_price) * 100;
     }
+
+    public function getImageUrlAttribute()
+    {
+        if (!$this->image_path) {
+            return null;
+        }
+        if (str_starts_with($this->image_path, 'http')) {
+            return $this->image_path;
+        }
+        return asset('storage/' . $this->image_path);
+    }
 }

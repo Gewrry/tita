@@ -76,7 +76,7 @@
         <div class="flex items-center gap-3 flex-1 min-w-0">
             <div class="w-10 h-10 rounded-xl bg-mint-50 flex items-center justify-center flex-shrink-0">
                 @if($product->image_path)
-                    <img src="{{ asset('storage/' . $product->image_path) }}" class="w-10 h-10 rounded-xl object-cover">
+                    <img src="{{ $product->image_url }}" class="w-10 h-10 rounded-xl object-cover">
                 @else
                     <svg class="w-5 h-5 text-mint-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                 @endif
@@ -414,7 +414,7 @@
                     <div>
                         <label class="field-label">Current Image</label>
                         <div class="relative inline-block">
-                            <img src="{{ asset('storage/' . $product->image_path) }}"
+                            <img src="{{ $product->image_url }}"
                                  class="h-36 w-full object-cover rounded-xl border border-beige-200 shadow-sm">
                             <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-mint-500 text-white text-[9px] font-black" style="min-height:unset;">Current</span>
                         </div>

@@ -358,7 +358,7 @@ button, a, select, input { min-height: 40px; }
             {{-- ── Image area ── --}}
             <div class="prod-image-wrap">
                 @if($product->image_path)
-                    <img src="{{ asset('storage/' . $product->image_path) }}" alt="{{ $product->name }}" loading="lazy">
+                    <img src="{{ $product->image_url }}" alt="{{ $product->name }}" loading="lazy">
                 @else
                     <div class="prod-placeholder">
                         <div class="flex flex-col items-center gap-1">

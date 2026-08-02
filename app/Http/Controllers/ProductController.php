@@ -83,7 +83,10 @@ class ProductController extends Controller
         $validated['reorder_level'] = $validated['reorder_level'] ?? 5;
 
         if ($request->hasFile('image')) {
-            $validated['image_path'] = $request->file('image')->store('products', 'public');
+            $uploadedFileUrl = cloudinary()->upload($request->file('image')->getRealPath(), [
+                'folder' => 'tita_products'
+            ])->getSecurePath();
+            $validated['image_path'] = $uploadedFileUrl;
         }
         unset($validated['image']);
 
@@ -145,7 +148,10 @@ class ProductController extends Controller
         $validated['track_stock'] = $request->boolean('track_stock', true);
 
         if ($request->hasFile('image')) {
-            $validated['image_path'] = $request->file('image')->store('products', 'public');
+            $uploadedFileUrl = cloudinary()->upload($request->file('image')->getRealPath(), [
+                'folder' => 'tita_products'
+            ])->getSecurePath();
+            $validated['image_path'] = $uploadedFileUrl;
         }
         unset($validated['image']);
 
