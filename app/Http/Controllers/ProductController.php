@@ -88,7 +88,7 @@ class ProductController extends Controller
                     'folder' => 'tita_products'
                 ])->getSecurePath();
                 $validated['image_path'] = $uploadedFileUrl;
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 if ($request->wantsJson()) {
                     return response()->json([
                         'message' => 'Image upload failed: ' . $e->getMessage(),
@@ -163,7 +163,7 @@ class ProductController extends Controller
                     'folder' => 'tita_products'
                 ])->getSecurePath();
                 $validated['image_path'] = $uploadedFileUrl;
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 if ($request->wantsJson()) {
                     return response()->json([
                         'message' => 'Image upload failed: ' . $e->getMessage(),
