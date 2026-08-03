@@ -192,7 +192,7 @@ class ProductController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Product updated successfully.',
-                'product' => $product
+                'product' => $product->fresh()->append('image_url')
             ]);
         }
 

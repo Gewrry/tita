@@ -68,7 +68,7 @@
             Products
         </a>
         <svg class="w-3 h-3 text-beige-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-        <span class="font-bold text-mint-900 truncate max-w-[200px]">{{ $product->name }}</span>
+        <span class="font-bold text-mint-900 truncate max-w-[200px]" x-text="productNameDisplay"></span>
     </div>
 
     {{-- Product status bar --}}
@@ -83,8 +83,8 @@
                 </template>
             </div>
             <div class="min-w-0">
-                <p class="text-sm font-extrabold text-mint-900 truncate">{{ $product->name }}</p>
-                <p class="text-xs text-beige-400 font-medium">ID #{{ $product->id }} {{ $product->sku ? '· SKU: ' . $product->sku : '' }}</p>
+                <p class="text-sm font-extrabold text-mint-900 truncate" x-text="productNameDisplay"></p>
+                <p class="text-xs text-beige-400 font-medium">ID #{{ $product->id }} <template x-if="productSkuDisplay"><span>· SKU: <span x-text="productSkuDisplay"></span></span></template></p>
             </div>
         </div>
         <div class="flex items-center gap-3 flex-wrap">
@@ -102,7 +102,7 @@
             @if(!$product->is_active)
                 <span class="px-3 py-1.5 rounded-full text-xs font-black bg-beige-100 text-beige-600" style="min-height:unset;">Inactive</span>
             @endif
-            <span class="text-xs text-beige-400 font-medium">Updated {{ $product->updated_at->diffForHumans() }}</span>
+            <span class="text-xs text-beige-400 font-medium" x-text="productUpdateText"></span>
         </div>
     </div>
 
@@ -658,6 +658,9 @@ function editProductForm() {
         productName:    '{{ old('name', addslashes($product->name)) }}',
         costPrice:      {{ old('cost_price', (float)$product->cost_price) }},
         sellingPrice:   {{ old('selling_price', (float)$product->selling_price) }},
+        productNameDisplay: '{!! addslashes($product->name) !!}',
+        productSkuDisplay:  '{!! addslashes($product->sku) !!}',
+        productUpdateText:  'Updated {{ $product->updated_at->diffForHumans() }}',
         submitting:     false,
         adjustSubmitting: false,
         errors:         {},
@@ -780,8 +783,18 @@ function editProductForm() {
                     }
                     this.submitting = false;
                 } else {
-                    if (data && data.product && data.product.image_path) {
-                        this.currentImageUrl = data.product.image_path.startsWith('http') ? data.product.image_path : '/storage/' + data.product.image_path;
+                    if (data && data.product) {
+                        // Update image from server's image_url accessor
+                        if (data.product.image_url) {
+                            this.currentImageUrl = data.product.image_url;
+                        }
+                        // Update status bar name, SKU, timestamp
+                        this.productNameDisplay = data.product.name;
+                        this.productSkuDisplay  = data.product.sku ?? '';
+                        this.productUpdateText  = 'Updated just now';
+                        // Keep Alpine cost/selling price in sync with what server saved
+                        this.costPrice    = parseFloat(data.product.cost_price);
+                        this.sellingPrice = parseFloat(data.product.selling_price);
                     }
                     this.clearImage(); // Clear preview since it's now the current image
                     
