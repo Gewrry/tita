@@ -75,11 +75,12 @@
     <div class="flex flex-wrap items-center gap-3 mb-6 p-4 bg-white border border-beige-200/60 rounded-2xl">
         <div class="flex items-center gap-3 flex-1 min-w-0">
             <div class="w-10 h-10 rounded-xl bg-mint-50 flex items-center justify-center flex-shrink-0">
-                @if($product->image_path)
-                    <img src="{{ $product->image_url }}" class="w-10 h-10 rounded-xl object-cover">
-                @else
+                <template x-if="currentImageUrl">
+                    <img :src="currentImageUrl" class="w-10 h-10 rounded-xl object-cover">
+                </template>
+                <template x-if="!currentImageUrl">
                     <svg class="w-5 h-5 text-mint-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                @endif
+                </template>
             </div>
             <div class="min-w-0">
                 <p class="text-sm font-extrabold text-mint-900 truncate">{{ $product->name }}</p>
@@ -410,20 +411,20 @@
                 </div>
                 <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
                     {{-- Current image --}}
-                    @if($product->image_path)
-                    <div>
-                        <label class="field-label">Current Image</label>
-                        <div class="relative inline-block">
-                            <img src="{{ $product->image_url }}"
-                                 class="h-36 w-full object-cover rounded-xl border border-beige-200 shadow-sm">
-                            <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-mint-500 text-white text-[9px] font-black" style="min-height:unset;">Current</span>
+                    <template x-if="currentImageUrl">
+                        <div>
+                            <label class="field-label">Current Image</label>
+                            <div class="relative inline-block w-full">
+                                <img :src="currentImageUrl"
+                                     class="h-36 w-full object-cover rounded-xl border border-beige-200 shadow-sm">
+                                <span class="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-mint-500 text-white text-[9px] font-black" style="min-height:unset;">Current</span>
+                            </div>
                         </div>
-                    </div>
-                    @endif
+                    </template>
 
-                    {{-- New upload --}}
-                    <div class="{{ $product->image_path ? '' : 'sm:col-span-2' }}">
-                        <label class="field-label">{{ $product->image_path ? 'Replace Image' : 'Upload Image' }}</label>
+                    {{-- Upload input --}}
+                    <div :class="currentImageUrl ? 'sm:col-span-1' : 'sm:col-span-2'">
+                        <label class="field-label" x-text="currentImageUrl ? 'Replace Image' : 'Upload Image'"></label>
                         <div class="drop-zone p-6 text-center"
                              @dragover.prevent="isDragging = true"
                              @dragleave="isDragging = false"
@@ -662,6 +663,7 @@ function editProductForm() {
         errors:         {},
         isDirty:        false,
         isDragging:     false,
+        currentImageUrl:'{{ $product->image_url }}',
         imagePreview:   null,
         imageError:     '',
         adjustType:     'stock_in',
@@ -778,6 +780,11 @@ function editProductForm() {
                     }
                     this.submitting = false;
                 } else {
+                    if (data && data.product && data.product.image_path) {
+                        this.currentImageUrl = data.product.image_path.startsWith('http') ? data.product.image_path : '/storage/' + data.product.image_path;
+                    }
+                    this.clearImage(); // Clear preview since it's now the current image
+                    
                     this.isDirty = false;
                     this.submitting = false;
                     window.dispatchEvent(new CustomEvent('notify', { detail: { msg: 'Product updated successfully!', type: 'success' } }));
