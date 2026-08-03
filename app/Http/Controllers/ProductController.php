@@ -84,9 +84,14 @@ class ProductController extends Controller
 
         if ($request->hasFile('image')) {
             try {
-                $response = cloudinary()->uploadApi()->upload($request->file('image')->getRealPath(), [
-                    'folder' => 'tita_products'
-                ]);
+                $uploadOptions = ['folder' => 'tita_products'];
+                
+                $extension = strtolower($request->file('image')->getClientOriginalExtension());
+                if (in_array($extension, ['heic', 'heif'])) {
+                    $uploadOptions['format'] = 'jpg';
+                }
+
+                $response = cloudinary()->uploadApi()->upload($request->file('image')->getRealPath(), $uploadOptions);
                 $validated['image_path'] = $response['secure_url'];
             } catch (\Throwable $e) {
                 if ($request->wantsJson()) {
@@ -159,9 +164,14 @@ class ProductController extends Controller
 
         if ($request->hasFile('image')) {
             try {
-                $response = cloudinary()->uploadApi()->upload($request->file('image')->getRealPath(), [
-                    'folder' => 'tita_products'
-                ]);
+                $uploadOptions = ['folder' => 'tita_products'];
+                
+                $extension = strtolower($request->file('image')->getClientOriginalExtension());
+                if (in_array($extension, ['heic', 'heif'])) {
+                    $uploadOptions['format'] = 'jpg';
+                }
+
+                $response = cloudinary()->uploadApi()->upload($request->file('image')->getRealPath(), $uploadOptions);
                 $validated['image_path'] = $response['secure_url'];
             } catch (\Throwable $e) {
                 if ($request->wantsJson()) {

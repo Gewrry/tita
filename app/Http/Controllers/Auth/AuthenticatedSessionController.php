@@ -22,7 +22,7 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request)
     {
         $request->authenticate();
 
@@ -31,6 +31,10 @@ class AuthenticatedSessionController extends Controller
         $home = business()?->isRestaurant()
             ? route('profit-dashboard.index', absolute: false)
             : route('dashboard', absolute: false);
+
+        if ($request->wantsJson()) {
+            return response()->json(['redirect' => session()->pull('url.intended', $home)]);
+        }
 
         return redirect()->intended($home);
     }
