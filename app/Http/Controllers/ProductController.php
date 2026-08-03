@@ -75,7 +75,7 @@ class ProductController extends Controller
             'unit' => 'required|in:' . implode(',', array_keys(Product::$units)),
             'is_active' => 'nullable|boolean',
             'track_stock' => 'nullable|boolean',
-            'image' => 'nullable|image|max:5120',
+            'image' => 'nullable|mimes:jpeg,png,jpg,gif,svg,webp,heic,heif|max:5120',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -150,7 +150,7 @@ class ProductController extends Controller
             'unit' => 'required|in:' . implode(',', array_keys(Product::$units)),
             'is_active' => 'nullable|boolean',
             'track_stock' => 'nullable|boolean',
-            'image' => 'nullable|image|max:5120',
+            'image' => 'nullable|mimes:jpeg,png,jpg,gif,svg,webp,heic,heif|max:5120',
         ]);
 
         $oldValues = $product->toArray();

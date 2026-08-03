@@ -24,7 +24,7 @@ class SettingsController extends Controller
             'currency' => 'nullable|string|max:10',
             'receipt_footer' => 'nullable|string|max:255',
             'default_table_count' => 'nullable|integer|min:1|max:100',
-            'logo' => 'nullable|image|max:2048',
+            'logo' => 'nullable|mimes:jpeg,png,jpg,gif,svg,webp,heic,heif|max:2048',
         ]);
 
         $settings = BusinessSetting::current();
